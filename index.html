@@ -1,491 +1,773 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Festa da Alícia 🎉</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f0f0f8;--surface:#fff;--surface2:#f5f5fc;--text:#1a1a2e;--text2:#6b6b8a;--text3:#a0a0c0;
-  --accent:#6c63ff;--border:#e4e4f0;
-}
-.dark{
-  --bg:#12121e;--surface:#1e1e30;--surface2:#252538;--text:#e8e8f8;--text2:#9090b0;--text3:#5a5a7a;
-  --border:#2a2a42;--accent:#7c75ff;
-}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .2s,color .2s}
-input,select{font-family:inherit}
-.app{width:100%;max-width:960px;margin:0 auto}
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:10}
-.header-left{display:flex;align-items:center;gap:10px}
-.party-icon{font-size:22px}
-.party-name-input{font-size:20px;font-weight:700;color:var(--text);border:none;background:transparent;outline:none;max-width:240px}
-.header-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:4px}
-.meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
-.meta-item input{font-size:12px;color:var(--text2);border:none;background:transparent;outline:none;max-width:140px}
-.header-right{display:flex;align-items:center;gap:10px}
-.theme-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text2)}
-.budget-badge{background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:7px 16px;border-radius:20px}
-.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:4px;overflow-x:auto}
-.nav-btn{padding:12px 18px;font-size:13px;font-weight:500;color:var(--text2);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.nav-btn:hover{color:var(--text)}
-.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
-.nav-add{margin-left:auto;color:var(--accent)}
-.content{padding:20px}
-.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
-.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
-.sum-label{font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
-.sum-value{font-size:22px;font-weight:700}
-.sum-value.green{color:#22c55e}
-.sum-value.orange{color:#f59e0b}
-.sum-value.purple{color:var(--accent)}
-.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}
-.section-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.chart-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-.donut-wrap{position:relative;width:180px;height:180px;flex-shrink:0}
-.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-.donut-center-val{font-size:18px;font-weight:700;color:var(--text)}
-.donut-center-label{font-size:10px;color:var(--text3)}
-.cat-list{flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px}
-.cat-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border-radius:10px}
-.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.cat-name{flex:1;font-size:13px;color:var(--text)}
-.cat-vals{text-align:right}
-.cat-amount{font-size:13px;font-weight:600;color:var(--text)}
-.cat-pct{font-size:11px;color:var(--text3)}
-.suppliers{display:flex;flex-direction:column;gap:14px}
-.sup-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-.sup-header{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
-.sup-avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.sup-info{flex:1;min-width:0}
-.sup-name-input{font-size:14px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;width:100%;max-width:220px}
-.sup-sub{font-size:12px;color:var(--text2);margin-top:1px}
-.sup-totals{text-align:right;flex-shrink:0}
-.sup-total-val{font-size:15px;font-weight:700;color:var(--text)}
-.sup-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
-.sup-body{padding:0 18px 14px;border-top:1px solid var(--border)}
-.items-header{display:grid;grid-template-columns:2fr 1fr 90px 90px 70px;gap:8px;padding:10px 0 6px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
-.item-row{display:grid;grid-template-columns:2fr 1fr 90px 90px 70px;gap:8px;padding:7px 0;border-top:1px solid var(--border);align-items:center}
-.item-input{font-size:13px;color:var(--text);border:none;background:transparent;outline:none;width:100%}
-.item-input:focus{background:var(--surface2);border-radius:4px;padding:0 4px}
-.item-val{font-size:13px;color:var(--text);border:1px solid var(--border);background:var(--surface2);outline:none;width:100%;text-align:right;border-radius:6px;padding:3px 6px}
-.item-val:focus{border-color:var(--accent)}
-.cat-select{font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);border-radius:6px;padding:3px 6px;outline:none;cursor:pointer;width:100%}
-.paid-toggle{width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
-.paid-toggle.on{background:#22c55e}
-.paid-toggle.off{background:var(--border)}
-.add-item-btn{margin-top:8px;font-size:12px;color:var(--accent);border:1px dashed var(--accent);background:transparent;border-radius:8px;padding:6px 12px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:4px}
-.add-sup-btn{background:var(--surface);border:2px dashed var(--border);border-radius:14px;padding:18px;text-align:center;font-size:13px;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
-.add-sup-btn:hover{border-color:var(--accent);color:var(--accent)}
-.prog-bar{height:4px;background:var(--surface2);border-radius:2px;margin-top:6px;overflow:hidden}
-.prog-fill{height:100%;border-radius:2px;background:#22c55e;transition:width .3s}
-.chevron{font-size:18px;color:var(--text3);transition:transform .2s;flex-shrink:0}
-.chevron.open{transform:rotate(180deg)}
-.del-btn{font-size:13px;color:var(--text3);border:none;background:transparent;cursor:pointer;padding:2px 6px;border-radius:4px}
-.del-btn:hover{color:#ef4444;background:var(--surface2)}
-.checklist{display:flex;flex-direction:column;gap:12px}
-.chk-group{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-.chk-group-header{padding:12px 16px;font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
-.chk-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--border)}
-.chk-item input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
-.chk-label{flex:1;font-size:13px;color:var(--text)}
-.chk-label input{font-size:13px;color:var(--text);border:none;background:transparent;outline:none;width:100%}
-.chk-label input:focus{background:var(--surface2);border-radius:4px;padding:0 4px}
-.chk-item.done .chk-label input{text-decoration:line-through;color:var(--text3)}
-.urgente-dot{width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0}
-.tab-content{display:none}
-.tab-content.active{display:block}
-@media(max-width:600px){
-  .items-header,.item-row{grid-template-columns:1fr 80px 70px 50px}
-  .items-header span:nth-child(2),.item-row .cat-select{display:none}
-  .party-name-input{max-width:150px;font-size:16px}
-  .header-meta{gap:10px}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Festa da Alícia 🎉</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f0f0f8;--surface:#fff;--surface2:#f6f6fc;--text:#1a1a2e;--text2:#6b6b8a;--text3:#a0a0c0;
+      --accent:#6c63ff;--border:#e4e4f0;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;--pink:#ec4899;
+      --shadow:0 12px 30px rgba(17,24,39,.08);
+    }
+    .dark{
+      --bg:#12121e;--surface:#1e1e30;--surface2:#252538;--text:#e8e8f8;--text2:#9090b0;--text3:#5a5a7a;
+      --border:#2a2a42;--accent:#7c75ff;--shadow:0 14px 34px rgba(0,0,0,.25);
+    }
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .2s,color .2s}
+    input,select,textarea,button{font-family:inherit}
+    .app{width:100%;max-width:1100px;margin:0 auto;padding-bottom:40px}
+    .header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10;box-shadow:var(--shadow)}
+    .party-name-input{font-size:20px;font-weight:700;color:var(--text);border:none;background:transparent;outline:none;max-width:320px}
+    .header-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
+    .meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+    .meta-item input{font-size:12px;color:var(--text2);border:none;background:transparent;outline:none;max-width:180px}
+    .header-right{display:flex;align-items:center;gap:10px}
+    .theme-btn,.modal-close{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:16px;color:var(--text)}
+    .budget-badge{background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:8px 16px;border-radius:22px}
+    .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:4px;overflow-x:auto;flex-wrap:nowrap}
+    .nav-btn{padding:12px 16px;font-size:13px;font-weight:600;color:var(--text2);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0}
+    .nav-btn.active,.nav-btn:hover{color:var(--accent);border-bottom-color:var(--accent)}
+    .content{padding:20px;display:none}
+    .content.active{display:block}
+    .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+    .sum-card,.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+    .sum-label{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+    .sum-value{font-size:22px;font-weight:800}
+    .c-green{color:var(--green)} .c-orange{color:var(--orange)} .c-purple{color:var(--accent)} .c-pink{color:var(--pink)}
+    .card-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .chart-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+    .donut-wrap{position:relative;width:180px;height:180px;flex-shrink:0}
+    .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+    .donut-center-val{font-size:18px;font-weight:800}
+    .donut-center-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+    .cat-list{flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px}
+    .cat-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:12px}
+    .cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .cat-name{flex:1;font-size:13px}
+    .cat-amount{font-size:13px;font-weight:700}
+    .cat-pct{font-size:11px;color:var(--text3)}
+    .section-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+    .section-help{font-size:12px;color:var(--text2)}
+    .primary-btn,.secondary-btn,.add-row-btn,.add-sup-btn,.add-resp-btn,.add-chk-btn{cursor:pointer;border-radius:12px;font-weight:700;transition:.2s ease}
+    .primary-btn{background:var(--accent);color:#fff;border:none;padding:11px 14px}
+    .secondary-btn{background:transparent;color:var(--text);border:1px solid var(--border);padding:10px 14px}
+    .add-sup-btn,.add-resp-btn{width:100%;padding:16px;font-size:14px;color:var(--text2);border:2px dashed var(--border);background:transparent}
+    .add-sup-btn:hover,.add-resp-btn:hover,.add-row-btn:hover,.add-chk-btn:hover,.secondary-btn:hover{background:var(--surface2)}
+    .sup-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+    .sup-head{padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+    .sup-avatar{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .sup-info{flex:1;min-width:0}
+    .sup-name{font-size:16px;font-weight:700}
+    .sup-sub{font-size:12px;color:var(--text2);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:var(--surface2);font-size:11px;color:var(--text2);border:1px solid var(--border)}
+    .sup-right{text-align:right;flex-shrink:0}
+    .sup-total{font-size:16px;font-weight:800}
+    .badge{display:inline-block;font-size:10px;padding:4px 8px;border-radius:20px;font-weight:700;margin-top:4px}
+    .badge-green{background:#dcfce7;color:#15803d}.badge-yellow{background:#fef3c7;color:#854d0e}.badge-red{background:#fee2e2;color:#b91c1c}
+    .prog-bar{height:6px;background:var(--surface2);border-radius:999px;margin-top:8px;overflow:hidden;width:100%}
+    .prog-fill{height:100%;border-radius:999px;background:var(--green)}
+    .chevron{font-size:20px;color:var(--text3);transition:transform .2s;flex-shrink:0;line-height:1}
+    .chevron.open{transform:rotate(180deg)}
+    .sup-body{border-top:1px solid var(--border);padding:14px 16px 16px}
+    .items-table{width:100%;border-collapse:collapse;font-size:13px}
+    .items-table th{text-align:left;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:8px 4px;border-bottom:1px solid var(--border)}
+    .items-table th.r{text-align:right}.items-table td{padding:8px 4px;border-bottom:1px solid var(--border);vertical-align:middle}
+    .items-table tr:last-child td{border-bottom:none}
+    .td-input,.pag-desc,.resp-name,.field input,.field select,.field textarea,.chk-text{font-size:13px;color:var(--text);border:1px solid var(--border);background:var(--surface2);border-radius:10px;padding:10px 12px;outline:none;width:100%}
+    .td-input,.pag-desc,.resp-name,.chk-text{padding:8px 10px;border-radius:8px}
+    .td-num,.pag-val{font-size:13px;color:var(--text);border:1px solid var(--border);background:var(--surface2);border-radius:8px;padding:8px 10px;width:110px;text-align:right;outline:none}
+    .cat-sel{font-size:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:8px;padding:8px 10px;outline:none;cursor:pointer;width:100%}
+    .toggle{width:36px;height:20px;border-radius:999px;border:none;cursor:pointer;transition:background .2s;flex-shrink:0}.toggle.on{background:var(--green)}.toggle.off{background:var(--border)}
+    .del-btn{border:none;background:transparent;cursor:pointer;color:var(--text3);padding:6px 8px;border-radius:8px;font-size:14px}.del-btn:hover{color:var(--red);background:var(--surface2)}
+    .add-row-btn{width:100%;margin-top:10px;padding:10px;font-size:12px;color:var(--accent);border:1px dashed var(--accent);background:transparent;display:flex;align-items:center;justify-content:center;gap:5px}
+    .resp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:16px}
+    .resp-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+    .resp-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .resp-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
+    .resp-total{font-size:22px;font-weight:800;margin-bottom:4px}
+    .resp-pago{font-size:12px;color:var(--text2);margin-bottom:8px}
+    .pag-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)}
+    .resp-summary{background:var(--surface2);border-radius:12px;padding:12px 14px;display:grid;gap:6px}
+    .resp-summary-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--text2)}
+    .split-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+    .split-card{padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .split-title{font-size:12px;color:var(--text2);margin-bottom:4px}
+    .split-value{font-size:18px;font-weight:800}
+    .chk-group{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+    .chk-head{padding:12px 16px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;background:var(--surface2)}
+    .chk-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--border)}
+    .chk-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+    .chk-item.done .chk-text{text-decoration:line-through;color:var(--text3)}
+    .urgente{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0}
+    .add-chk-btn{width:100%;padding:10px 12px;font-size:12px;color:var(--accent);border:1px dashed var(--accent);background:transparent;border-radius:0}
+    .muted{color:var(--text3)}
+    .empty{padding:16px;border:1px dashed var(--border);border-radius:14px;color:var(--text2);background:var(--surface)}
+    #statusBar{position:fixed;bottom:14px;right:14px;font-size:12px;padding:8px 14px;border-radius:20px;z-index:999;opacity:0;transition:opacity .4s;color:#fff;font-family:'Segoe UI',sans-serif}
+    .modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:16px;z-index:1000}
+    .modal.open{display:flex}
+    .modal-panel{width:min(920px,100%);max-height:94vh;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:18px}
+    .modal-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+    .modal-title{font-size:18px;font-weight:800}
+    .modal-sub{font-size:12px;color:var(--text2);margin-top:4px}
+    .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:12px;font-weight:700;color:var(--text2)}
+    .field.span-2{grid-column:span 2}
+    .items-editor{margin-top:18px;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .items-editor-top{padding:12px 14px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .items-editor-title{font-size:13px;font-weight:800}
+    .items-editor-help{font-size:12px;color:var(--text2)}
+    .inline-table{width:100%;border-collapse:collapse}
+    .inline-table th,.inline-table td{padding:10px;border-top:1px solid var(--border);text-align:left}
+    .inline-table th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);background:var(--surface)}
+    .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
+    .hint{font-size:11px;color:var(--text3)}
+    @media(max-width:820px){.form-grid{grid-template-columns:repeat(2,1fr)}.field.span-2{grid-column:span 2}}
+    @media(max-width:650px){
+      .items-table th:nth-child(4),.items-table td:nth-child(4){display:none}
+      .form-grid{grid-template-columns:1fr}
+      .field.span-2{grid-column:auto}
+      .inline-table th:nth-child(2),.inline-table td:nth-child(2){display:none}
+      .header{padding:14px}
+      .nav,.content{padding-left:14px;padding-right:14px}
+      .sup-head{align-items:flex-start}
+      .sup-right{min-width:88px}
+    }
+  </style>
 </head>
 <body>
-<div class="app" id="app">
-
-<div class="header">
-  <div>
-    <div class="header-left">
-      <span class="party-icon">🎉</span>
-      <input class="party-name-input" value="Festa da Alícia" id="partyName">
-    </div>
-    <div class="header-meta">
-      <div class="meta-item">📅 <input id="partyDate" value="Data não definida"></div>
-      <div class="meta-item">🕐 <input id="partyTime" value="Horário não definido"></div>
-      <div class="meta-item">📍 <input id="partyLocal" value="Local não definido"></div>
-    </div>
-  </div>
-  <div class="header-right">
-    <button class="theme-btn" onclick="toggleTheme()" aria-label="Alternar tema">🌙</button>
-    <div class="budget-badge" id="headerTotal">R$ 0,00</div>
-  </div>
-</div>
-
-<div class="nav">
-  <button class="nav-btn active" onclick="switchTab('dashboard',this)">⊞ Dashboard</button>
-  <button class="nav-btn" onclick="switchTab('fornecedores',this)">🏪 Fornecedores</button>
-  <button class="nav-btn" onclick="switchTab('checklist',this)">✅ Checklist</button>
-  <button class="nav-btn nav-add" onclick="addSupplier()">⊕ Adicionar fornecedor</button>
-</div>
-
-<div class="content tab-content active" id="tab-dashboard">
-  <div class="summary" id="summaryCards"></div>
-  <div class="chart-section">
-    <div class="section-title">💰 Divisão por categoria</div>
-    <div class="chart-wrap">
-      <div class="donut-wrap">
-        <canvas id="donutChart" width="180" height="180" role="img" aria-label="Gráfico de rosca com divisão de gastos por categoria"></canvas>
-        <div class="donut-center">
-          <div class="donut-center-val" id="donutTotal">R$ 0</div>
-          <div class="donut-center-label">total</div>
+  <div class="app" id="app">
+    <div class="header">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:22px">🎉</span>
+          <input class="party-name-input" id="partyName" value="Festa da Alícia" />
+        </div>
+        <div class="header-meta">
+          <div class="meta-item">📅 <input id="partyDate" placeholder="Data" value="" /></div>
+          <div class="meta-item">🕐 <input id="partyTime" placeholder="Horário" value="" /></div>
+          <div class="meta-item">📍 <input id="partyLocal" placeholder="Local" value="" /></div>
         </div>
       </div>
-      <div class="cat-list" id="catList"></div>
+      <div class="header-right">
+        <button class="theme-btn" type="button" onclick="toggleTheme()">🌙</button>
+        <div class="budget-badge" id="headerTotal">R$ 0,00</div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn active" type="button" onclick="goTab('dashboard',this)">⊞ Dashboard</button>
+      <button class="nav-btn" type="button" onclick="goTab('fornecedores',this)">🏪 Fornecedores</button>
+      <button class="nav-btn" type="button" onclick="goTab('responsaveis',this)">👥 Responsáveis</button>
+      <button class="nav-btn" type="button" onclick="goTab('checklist',this)">✅ Checklist</button>
+    </div>
+
+    <div class="content active" id="tab-dashboard">
+      <div class="summary" id="summaryCards"></div>
+      <div class="card">
+        <div class="card-title">💰 Divisão por categoria</div>
+        <div class="chart-wrap">
+          <div class="donut-wrap">
+            <canvas id="donutChart" width="180" height="180" role="img" aria-label="Divisão por categoria"></canvas>
+            <div class="donut-center">
+              <div class="donut-center-val" id="donutTotal">R$ 0</div>
+              <div class="donut-center-label">total</div>
+            </div>
+          </div>
+          <div class="cat-list" id="catList"></div>
+        </div>
+      </div>
+      <div class="card" id="splitCard">
+        <div class="card-title">🧾 Divisão de valores</div>
+        <div class="section-help">Resumo automático de quem pagou o quê, quanto falta e quanto cada pessoa deveria cobrir em uma divisão igual.</div>
+        <div class="split-grid" id="splitGrid"></div>
+      </div>
+    </div>
+
+    <div class="content" id="tab-fornecedores">
+      <div class="section-top">
+        <div>
+          <div class="card-title" style="margin-bottom:4px">🏪 Fornecedores</div>
+          <div class="section-help">O formulário permite cadastrar nome, valores, categoria de serviço, sinal e itens fechados.</div>
+        </div>
+        <button class="primary-btn" type="button" onclick="openSupplierModal()">⊕ Novo fornecedor</button>
+      </div>
+      <div id="suppliersList"></div>
+      <button class="add-sup-btn" type="button" onclick="openSupplierModal()">⊕ Novo fornecedor</button>
+    </div>
+
+    <div class="content" id="tab-responsaveis">
+      <div class="section-top">
+        <div>
+          <div class="card-title" style="margin-bottom:4px">👥 Responsáveis</div>
+          <div class="section-help">Cadastre quem pagou e registre cada pagamento associado.</div>
+        </div>
+        <button class="primary-btn" type="button" onclick="openRespModal()">⊕ Novo responsável</button>
+      </div>
+      <div class="resp-grid" id="respGrid"></div>
+      <div id="respSummaryCard" class="card"></div>
+      <button class="add-resp-btn" type="button" onclick="openRespModal()">⊕ Novo responsável</button>
+    </div>
+
+    <div class="content" id="tab-checklist">
+      <div id="checklistWrap"></div>
     </div>
   </div>
-</div>
 
-<div class="content tab-content" id="tab-fornecedores">
-  <div class="suppliers" id="suppliersList"></div>
-  <button class="add-sup-btn" onclick="addSupplier()" style="margin-top:14px">⊕ Novo fornecedor</button>
-</div>
+  <div id="statusBar"></div>
 
-<div class="content tab-content" id="tab-checklist">
-  <div class="checklist" id="checklistWrap"></div>
-</div>
+  <div class="modal" id="supplierModal" aria-hidden="true">
+    <div class="modal-panel">
+      <div class="modal-top">
+        <div>
+          <div class="modal-title" id="supplierModalTitle">Novo fornecedor</div>
+          <div class="modal-sub">Preencha os dados do fornecedor e detalhe os itens fechados logo abaixo.</div>
+        </div>
+        <button class="modal-close" type="button" onclick="closeSupplierModal()">✕</button>
+      </div>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label for="supFormName">Nome do fornecedor</label>
+          <input id="supFormName" type="text" placeholder="Ex.: Buffet Sabor da Festa" />
+        </div>
+        <div class="field">
+          <label for="supFormCategory">Categoria de serviço</label>
+          <select id="supFormCategory"></select>
+        </div>
+        <div class="field">
+          <label for="supFormEmoji">Emoji</label>
+          <input id="supFormEmoji" type="text" maxlength="2" placeholder="🏪" />
+        </div>
+        <div class="field">
+          <label for="supFormTotal">Valor total do fornecedor</label>
+          <input id="supFormTotal" type="number" min="0" step="0.01" placeholder="0,00" />
+        </div>
+        <div class="field">
+          <label for="supFormSignal">Valor de sinal</label>
+          <input id="supFormSignal" type="number" min="0" step="0.01" placeholder="0,00" />
+        </div>
+        <div class="field span-2">
+          <label for="supFormNotes">Observações</label>
+          <textarea id="supFormNotes" rows="2" placeholder="Ex.: restante em 10/08, inclui montagem e desmontagem"></textarea>
+        </div>
+      </div>
 
-</div>
+      <div class="items-editor">
+        <div class="items-editor-top">
+          <div>
+            <div class="items-editor-title">Itens fechados no fornecedor</div>
+            <div class="items-editor-help">Adicione item por item com nome, categoria e valor.</div>
+          </div>
+          <button class="secondary-btn" type="button" onclick="addEditorSupplierItem()">+ Adicionar item</button>
+        </div>
+        <table class="inline-table">
+          <thead>
+            <tr>
+              <th>Nome do item</th>
+              <th>Categoria</th>
+              <th>Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="supplierItemsEditor"></tbody>
+        </table>
+      </div>
+      <div class="hint" style="margin-top:10px">Dica: se você não informar itens, o sistema cria automaticamente um item principal com o valor total do fornecedor.</div>
+      <div class="modal-actions">
+        <button class="secondary-btn" type="button" onclick="closeSupplierModal()">Cancelar</button>
+        <button class="primary-btn" type="button" onclick="saveSupplierFromModal()">Salvar fornecedor</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="respModal" aria-hidden="true">
+    <div class="modal-panel" style="width:min(760px,100%)">
+      <div class="modal-top">
+        <div>
+          <div class="modal-title" id="respModalTitle">Novo responsável</div>
+          <div class="modal-sub">Cadastre a pessoa e os pagamentos já realizados.</div>
+        </div>
+        <button class="modal-close" type="button" onclick="closeRespModal()">✕</button>
+      </div>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label for="respFormName">Nome do responsável</label>
+          <input id="respFormName" type="text" placeholder="Ex.: Mirian" />
+        </div>
+      </div>
+      <div class="items-editor">
+        <div class="items-editor-top">
+          <div>
+            <div class="items-editor-title">Pagamentos feitos</div>
+            <div class="items-editor-help">Ex.: “Sinal do buffet” — R$ 350,00</div>
+          </div>
+          <button class="secondary-btn" type="button" onclick="addEditorPayment()">+ Adicionar pagamento</button>
+        </div>
+        <table class="inline-table">
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="respPaymentsEditor"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <button class="secondary-btn" type="button" onclick="closeRespModal()">Cancelar</button>
+        <button class="primary-btn" type="button" onclick="saveRespFromModal()">Salvar responsável</button>
+      </div>
+    </div>
+  </div>
 
 <script>
-const CATS=['Salão','Buffet','Decoração','Bolo','Lembrancinhas','Outro'];
+const CATS=['Salão','Buffet','Decoração','Bolo','Lembrancinhas','Foto e Vídeo','Brinquedos','Outro'];
 const CAT_COLORS=['#6c63ff','#ec4899','#14b8a6','#f59e0b','#3b82f6','#a855f7','#22c55e','#ef4444'];
-const SUP_COLORS=['#ede9fe','#fce7f3','#ccfbf1','#fef3c7','#dbeafe','#f3e8ff'];
-const SUP_TEXT=['#7c3aed','#be185d','#0f766e','#b45309','#1d4ed8','#7e22ce'];
-
+const SUP_BG=['#ede9fe','#fce7f3','#ccfbf1','#fef3c7','#dbeafe','#f3e8ff','#dcfce7','#fee2e2'];
+const SUP_TC=['#7c3aed','#be185d','#0f766e','#b45309','#1d4ed8','#7e22ce','#15803d','#b91c1c'];
+const RESP_COLORS=['#6c63ff','#ec4899','#14b8a6','#f59e0b','#ef4444','#a855f7','#3b82f6','#22c55e'];
+const FIREBASE_CONFIG={databaseURL:'https://festa-alicia-default-rtdb.firebaseio.com'};
+const FIREBASE_PATH='festa';
 let dark=false;
 let supOpen={};
 let donutChart=null;
-
-const STORAGE_KEY='festa_alicia_data';
-
-const defaultData={
-  suppliers:[
-    {id:'s1',name:'Salão de Festa',emoji:'🏛️',color:0,items:[
-      {id:'i1',name:'Aluguel do salão',cat:'Salão',total:400,paid:0,isPaid:false},
-    ]},
-    {id:'s2',name:'Buffet',emoji:'🍕',color:1,items:[
-      {id:'i2',name:'Buffet completo (salgadinhos, capeios, cachorro quente)',cat:'Buffet',total:360,paid:0,isPaid:false},
-      {id:'i3',name:'Fritadeira / caldo',cat:'Buffet',total:80,paid:80,isPaid:true},
-      {id:'i4',name:'Estação mini pizza',cat:'Buffet',total:350,paid:0,isPaid:false},
-      {id:'i5',name:'Salgados 500 un (ou 1000 un = R$470)',cat:'Buffet',total:289,paid:0,isPaid:false},
-    ]},
-    {id:'s3',name:'Terra Decoração',emoji:'🌿',color:2,items:[
-      {id:'i6',name:'Mesa de decoração',cat:'Decoração',total:350,paid:250,isPaid:false},
-    ]},
-    {id:'s4',name:'Confeitaria',emoji:'🎂',color:3,items:[
-      {id:'i7',name:'Bolo da mesa',cat:'Bolo',total:950,paid:475,isPaid:false},
-      {id:'i8',name:'200 docinhos',cat:'Bolo',total:0,paid:0,isPaid:false},
-    ]},
-    {id:'s5',name:'Compras Próprias',emoji:'🛒',color:4,items:[
-      {id:'i9',name:'Mini pizza congelada',cat:'Buffet',total:0,paid:0,isPaid:false},
-      {id:'i10',name:'Decorações do bolo',cat:'Bolo',total:0,paid:0,isPaid:false},
-      {id:'i11',name:'Vela do bolo',cat:'Bolo',total:0,paid:0,isPaid:true},
-      {id:'i12',name:'Fita para lembrancinhas',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
-      {id:'i13',name:'Toalhas das mesas + discos',cat:'Decoração',total:0,paid:0,isPaid:true},
-      {id:'i14',name:'60 tiaras transparentes',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
-      {id:'i15',name:'60 cadernos de desenho',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
-      {id:'i16',name:'60 giz de cera',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
-      {id:'i17',name:'60 bolinhas de sabão',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
-      {id:'i18',name:'Conteúdo centro de mesa',cat:'Decoração',total:0,paid:0,isPaid:false},
-      {id:'i19',name:'Bolsas / necessaire',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
-    ]},
-  ],
-  checklist:[
-    {id:'k1',done:false,text:'Pagar saldo do salão (R$ 400)',urgente:true,cat:'Salão'},
-    {id:'k2',done:false,text:'Pagar saldo do buffet (R$ 360)',urgente:true,cat:'Buffet'},
-    {id:'k3',done:false,text:'Pagar saldo mesa do Terra (R$ 100)',urgente:false,cat:'Decoração'},
-    {id:'k4',done:true,text:'Comprar vela do bolo',urgente:false,cat:'Bolo'},
-    {id:'k5',done:true,text:'Comprar toalhas das mesas e discos',urgente:false,cat:'Decoração'},
-    {id:'k6',done:false,text:'Pintar decoração de centro de mesa',urgente:false,cat:'Decoração'},
-    {id:'k7',done:false,text:'Comprar decorações do bolo',urgente:false,cat:'Bolo'},
-    {id:'k8',done:false,text:'Comprar mini pizza congelada',urgente:false,cat:'Buffet'},
-    {id:'k9',done:false,text:'Comprar fita para lembrancinhas',urgente:false,cat:'Lembrancinhas'},
-    {id:'k10',done:false,text:'Definir qtd salgados: 500 ou 1000',urgente:true,cat:'Buffet'},
-    {id:'k11',done:false,text:'Providenciar 400 pães (cachorro quente)',urgente:false,cat:'Buffet'},
-    {id:'k12',done:false,text:'60 tiaras, cadernos, giz de cera, bolinhas de sabão',urgente:false,cat:'Lembrancinhas'},
-  ]
-};
-
-firebase.initializeApp({
-  databaseURL:'https://festa-alicia-default-rtdb.firebaseio.com'
-});
-const db=firebase.database();
-const ref=db.ref('festa');
-
-const data={suppliers:[],checklist:[]};
+let activeTab='dashboard';
+let editingSupplierId=null;
+let editingRespId=null;
 let ready=false;
 let saving=false;
+let queuedSave=false;
 
-function showStatus(msg,color){
-  let el=document.getElementById('statusBar');
-  if(!el){
-    el=document.createElement('div');
-    el.id='statusBar';
-    el.style.cssText='position:fixed;bottom:12px;right:12px;font-size:12px;padding:6px 12px;border-radius:20px;z-index:999;transition:opacity .5s;font-family:inherit';
-    document.body.appendChild(el);
-  }
-  el.textContent=msg;
-  el.style.background=color||'#22c55e';
-  el.style.color='#fff';
-  el.style.opacity='1';
-  clearTimeout(el._t);
-  el._t=setTimeout(()=>el.style.opacity='0',2500);
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function fmt(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function escH(s){return String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function num(v){const n=parseFloat(v); return Number.isFinite(n)?n:0;}
+function showStatus(msg,color){const el=document.getElementById('statusBar');el.textContent=msg;el.style.background=color||'#22c55e';el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',2400);}
+function categoryOptions(selected='Outro'){return CATS.map(c=>`<option value="${c}"${c===selected?' selected':''}>${c}</option>`).join('');}
+function supplierEmojiForCat(cat){const map={'Salão':'🏛️','Buffet':'🍕','Decoração':'🌿','Bolo':'🎂','Lembrancinhas':'🎁','Foto e Vídeo':'📸','Brinquedos':'🎈','Outro':'🏪'}; return map[cat]||'🏪';}
+
+const defaultData={
+  meta:{name:'Festa da Alícia',date:'',time:'',local:''},
+  suppliers:[
+    {id:'s1',name:'Salão de Festa',emoji:'🏛️',color:0,serviceCategory:'Salão',contractTotal:400,signal:0,notes:'',items:[{id:'i1',name:'Aluguel do salão',cat:'Salão',total:400,paid:0,isPaid:false}]},
+    {id:'s2',name:'Buffet',emoji:'🍕',color:1,serviceCategory:'Buffet',contractTotal:730,signal:80,notes:'',items:[{id:'i2',name:'Buffet completo',cat:'Buffet',total:360,paid:0,isPaid:false},{id:'i3',name:'Fritadeira / caldo',cat:'Buffet',total:80,paid:80,isPaid:true},{id:'i4',name:'Estação mini pizza',cat:'Buffet',total:290,paid:0,isPaid:false}]}
+  ],
+  responsaveis:[
+    {id:'r1',name:'Responsável 1',color:0,pagamentos:[{id:'p1',desc:'Sinal do salão',valor:0}]},
+    {id:'r2',name:'Responsável 2',color:1,pagamentos:[{id:'p2',desc:'',valor:0}]}
+  ],
+  checklist:[
+    {id:'k1',done:false,text:'Definir quantidade de salgados',urgente:true,cat:'Buffet'},
+    {id:'k2',done:false,text:'Confirmar decoração da mesa',urgente:false,cat:'Decoração'},
+    {id:'k3',done:false,text:'Comprar lembrancinhas finais',urgente:false,cat:'Lembrancinhas'}
+  ]
+};
+const data={meta:{},suppliers:[],responsaveis:[],checklist:[]};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db=firebase.database();
+const ref=db.ref(FIREBASE_PATH);
+
+function clone(value){return JSON.parse(JSON.stringify(value));}
+function normalizeData(){
+  data.meta ||= {name:'Festa da Alícia',date:'',time:'',local:''};
+  data.suppliers ||= [];
+  data.responsaveis ||= [];
+  data.checklist ||= [];
+  data.suppliers.forEach((s,idx)=>{
+    s.id ||= uid();
+    s.name ||= 'Novo fornecedor';
+    s.serviceCategory ||= (s.items?.[0]?.cat || 'Outro');
+    s.emoji ||= supplierEmojiForCat(s.serviceCategory);
+    s.color = Number.isFinite(s.color)?s.color:idx%SUP_BG.length;
+    s.contractTotal = num(s.contractTotal || (s.items||[]).reduce((a,i)=>a+num(i.total),0));
+    s.signal = num(s.signal || 0);
+    s.notes ||= '';
+    s.items = Array.isArray(s.items)?s.items:[];
+    s.items.forEach(item=>{ item.id ||= uid(); item.name ||= ''; item.cat ||= 'Outro'; item.total = num(item.total); item.paid = num(item.paid); item.isPaid = !!item.isPaid; });
+  });
+  data.responsaveis.forEach((r,idx)=>{
+    r.id ||= uid(); r.name ||= 'Novo responsável'; r.color=Number.isFinite(r.color)?r.color:idx%RESP_COLORS.length; r.pagamentos = Array.isArray(r.pagamentos)?r.pagamentos:[];
+    r.pagamentos.forEach(p=>{p.id ||= uid(); p.desc ||= ''; p.valor = num(p.valor);});
+  });
+  data.checklist.forEach(c=>{c.id ||= uid(); c.text ||= ''; c.cat ||= 'Outro'; c.done=!!c.done; c.urgente=!!c.urgente;});
 }
-
-showStatus('Conectando...','#6c63ff');
-
-ref.on('value',snap=>{
-  if(saving)return;
-  const val=snap.val();
-  if(val&&val.suppliers){
-    data.suppliers=val.suppliers;
-    data.checklist=val.checklist||[];
-  } else if(!ready){
-    data.suppliers=JSON.parse(JSON.stringify(defaultData.suppliers));
-    data.checklist=JSON.parse(JSON.stringify(defaultData.checklist));
-    ref.set(JSON.parse(JSON.stringify(data)));
+function applyMeta(){
+  document.getElementById('partyName').value = data.meta?.name || 'Festa da Alícia';
+  document.getElementById('partyDate').value = data.meta?.date || '';
+  document.getElementById('partyTime').value = data.meta?.time || '';
+  document.getElementById('partyLocal').value = data.meta?.local || '';
+}
+function hydrateFromFirebase(val){
+  if(val && typeof val === 'object'){
+    data.meta = val.meta || {};
+    data.suppliers = Array.isArray(val.suppliers) ? val.suppliers : [];
+    data.responsaveis = Array.isArray(val.responsaveis) ? val.responsaveis : [];
+    data.checklist = Array.isArray(val.checklist) ? val.checklist : [];
+  }else{
+    const base = clone(defaultData);
+    data.meta = base.meta; data.suppliers = base.suppliers; data.responsaveis = base.responsaveis; data.checklist = base.checklist;
   }
-  if(!ready){
-    ready=true;
-    showStatus('Conectado ✓','#22c55e');
-    renderAll();
-  } else {
-    renderAll();
-  }
-});
-
+  normalizeData();
+  applyMeta();
+  renderAll();
+}
+function buildPayload(){
+  return clone({meta:data.meta,suppliers:data.suppliers,responsaveis:data.responsaveis,checklist:data.checklist});
+}
 function saveData(){
   if(!ready)return;
+  data.meta={
+    name:document.getElementById('partyName').value || 'Festa da Alícia',
+    date:document.getElementById('partyDate').value,
+    time:document.getElementById('partyTime').value,
+    local:document.getElementById('partyLocal').value
+  };
+  if(saving){queuedSave=true;return;}
   saving=true;
-  ref.set(JSON.parse(JSON.stringify(data)))
-    .then(()=>{saving=false;showStatus('Salvo ✓','#22c55e');})
-    .catch(()=>{saving=false;showStatus('Erro ao salvar','#ef4444');});
+  ref.set(buildPayload())
+    .then(()=>{saving=false;showStatus('Salvo no Firebase ✓','#22c55e'); if(queuedSave){queuedSave=false;saveData();}})
+    .catch(err=>{saving=false;queuedSave=false;console.error(err);showStatus('Erro ao salvar no Firebase','#ef4444');});
 }
 
-function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+ref.on('value', snap=>{
+  if(saving)return;
+  const val=snap.val();
+  if(val){
+    hydrateFromFirebase(val);
+  }else{
+    const base=clone(defaultData);
+    data.meta=base.meta; data.suppliers=base.suppliers; data.responsaveis=base.responsaveis; data.checklist=base.checklist;
+    normalizeData(); applyMeta(); renderAll();
+    if(ready){ saveData(); }
+  }
+  ready=true;
+  showStatus('Conectado ao Firebase ✓','#22c55e');
+}, err=>{
+  console.error(err);
+  showStatus('Erro ao conectar no Firebase','#ef4444');
+});
 
+['partyName','partyDate','partyTime','partyLocal'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{saveData();renderSummary();}));
+
+document.getElementById('supFormCategory').innerHTML = categoryOptions('Outro');
+document.getElementById('supFormCategory').addEventListener('change',e=>{
+  const emojiInput=document.getElementById('supFormEmoji');
+  if(!emojiInput.value || emojiInput.value==='🏪'){ emojiInput.value = supplierEmojiForCat(e.target.value); }
+});
+
+function goTab(tab,btn){
+  document.querySelectorAll('.content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(btn){ btn.classList.add('active'); }
+  else{
+    document.querySelectorAll('.nav-btn').forEach(el=>{ const oc = el.getAttribute('onclick')||''; if(oc.includes(`'${tab}'`)){ el.classList.add('active'); } });
+  }
+  activeTab=tab;
+  renderAll();
+}
+
+function supplierItemsTotal(s){ return (s.items||[]).reduce((a,i)=>a+num(i.total),0); }
+function supplierPaidTotal(s){ return (s.items||[]).reduce((a,i)=>a+num(i.paid),0); }
+function supplierDisplayTotal(s){ return Math.max(num(s.contractTotal), supplierItemsTotal(s)); }
 function calcTotals(){
-  let total=0,paid=0;
-  data.suppliers.forEach(s=>s.items.forEach(i=>{total+=i.total||0;paid+=i.paid||0;}));
-  return{total,paid,pending:total-paid,sups:data.suppliers.length};
+  const total = data.suppliers.reduce((sum,s)=>sum+supplierDisplayTotal(s),0);
+  const paid = data.suppliers.reduce((sum,s)=>sum+Math.max(supplierPaidTotal(s), num(s.signal)),0);
+  const respTotal = data.responsaveis.reduce((sum,r)=>sum+(r.pagamentos||[]).reduce((a,p)=>a+num(p.valor),0),0);
+  return {total, paid, pending:Math.max(total-paid,0), sups:data.suppliers.length, respTotal};
 }
-
-function calcByCat(){
-  const map={};
-  data.suppliers.forEach(s=>s.items.forEach(i=>{
-    if(!map[i.cat])map[i.cat]={total:0,paid:0};
-    map[i.cat].total+=i.total||0;map[i.cat].paid+=i.paid||0;
-  }));
-  return map;
+function renderAll(){
+  renderSummary();
+  renderChart();
+  renderSplit();
+  if(activeTab==='fornecedores')renderSuppliers();
+  if(activeTab==='responsaveis')renderResponsaveis();
+  if(activeTab==='checklist')renderChecklist();
 }
-
-function fmt(v){return'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
-
 function renderSummary(){
   const t=calcTotals();
   document.getElementById('headerTotal').textContent=fmt(t.total);
   document.getElementById('summaryCards').innerHTML=`
     <div class="sum-card"><div class="sum-label">Total geral</div><div class="sum-value">${fmt(t.total)}</div></div>
-    <div class="sum-card"><div class="sum-label">Total pago</div><div class="sum-value green">${fmt(t.paid)}</div></div>
-    <div class="sum-card"><div class="sum-label">Pendente</div><div class="sum-value orange">${fmt(t.pending)}</div></div>
-    <div class="sum-card"><div class="sum-label">Fornecedores</div><div class="sum-value purple">${t.sups}</div></div>
+    <div class="sum-card"><div class="sum-label">Já pago / sinal</div><div class="sum-value c-green">${fmt(t.paid)}</div></div>
+    <div class="sum-card"><div class="sum-label">Pendente</div><div class="sum-value c-orange">${fmt(t.pending)}</div></div>
+    <div class="sum-card"><div class="sum-label">Contribuído pelos responsáveis</div><div class="sum-value c-pink">${fmt(t.respTotal)}</div></div>
   `;
-  renderChart();
 }
-
 function renderChart(){
-  const map=calcByCat();
-  const cats=Object.keys(map).filter(c=>map[c].total>0);
-  const total=cats.reduce((s,c)=>s+map[c].total,0)||1;
-  document.getElementById('donutTotal').textContent='R$ '+Math.round(total).toLocaleString('pt-BR');
-  document.getElementById('catList').innerHTML=cats.length?cats.map((c,i)=>`
-    <div class="cat-row">
-      <div class="cat-dot" style="background:${CAT_COLORS[i%CAT_COLORS.length]}"></div>
-      <div class="cat-name">${c}</div>
-      <div class="cat-vals">
-        <div class="cat-amount">${fmt(map[c].total)}</div>
-        <div class="cat-pct">${Math.round(map[c].total/total*100)}%</div>
-      </div>
-    </div>`).join(''):'<div style="color:var(--text3);font-size:13px">Nenhum gasto registrado ainda</div>';
-  const canvas=document.getElementById('donutChart');
-  if(!canvas)return;
-  if(donutChart)donutChart.destroy();
-  if(!cats.length){
-    const ctx=canvas.getContext('2d');
-    ctx.clearRect(0,0,180,180);
-    ctx.beginPath();ctx.arc(90,90,70,0,Math.PI*2);
-    ctx.strokeStyle='#e4e4f0';ctx.lineWidth=28;ctx.stroke();
-    return;
-  }
-  donutChart=new Chart(canvas,{
-    type:'doughnut',
-    data:{labels:cats,datasets:[{data:cats.map(c=>map[c].total),backgroundColor:cats.map((_,i)=>CAT_COLORS[i%CAT_COLORS.length]),borderWidth:2,borderColor:'transparent'}]},
-    options:{responsive:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}}}
+  const map={};
+  data.suppliers.forEach(s=>{
+    const baseTotal = supplierItemsTotal(s) > 0 ? null : supplierDisplayTotal(s);
+    if(baseTotal !== null){ map[s.serviceCategory||'Outro'] = (map[s.serviceCategory||'Outro']||0) + baseTotal; }
+    (s.items||[]).forEach(i=>{ map[i.cat||'Outro']=(map[i.cat||'Outro']||0)+num(i.total); });
   });
+  const cats=Object.keys(map).filter(c=>map[c]>0);
+  const total=cats.reduce((s,c)=>s+map[c],0)||1;
+  document.getElementById('donutTotal').textContent='R$ '+Math.round(total).toLocaleString('pt-BR');
+  document.getElementById('catList').innerHTML=cats.length ? cats.map((c,i)=>`<div class="cat-row"><div class="cat-dot" style="background:${CAT_COLORS[i%CAT_COLORS.length]}"></div><div class="cat-name">${escH(c)}</div><div><div class="cat-amount">${fmt(map[c])}</div><div class="cat-pct">${Math.round(map[c]/total*100)}%</div></div></div>`).join('') : '<div class="empty">Nenhum gasto ainda.</div>';
+  const canvas=document.getElementById('donutChart');
+  if(donutChart)donutChart.destroy();
+  if(!cats.length){ const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,180,180); ctx.beginPath(); ctx.arc(90,90,68,0,Math.PI*2); ctx.strokeStyle='#e4e4f0'; ctx.lineWidth=26; ctx.stroke(); return; }
+  donutChart=new Chart(canvas,{type:'doughnut',data:{labels:cats,datasets:[{data:cats.map(c=>map[c]),backgroundColor:cats.map((_,i)=>CAT_COLORS[i%CAT_COLORS.length]),borderWidth:0}]},options:{responsive:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}}}});
+}
+function renderSplit(){
+  const totalFesta = data.suppliers.reduce((sum,s)=>sum+supplierDisplayTotal(s),0);
+  const totalPago = data.responsaveis.reduce((sum,r)=>sum+(r.pagamentos||[]).reduce((a,p)=>a+num(p.valor),0),0);
+  const qtdResp = data.responsaveis.length || 1;
+  const cotaIdeal = totalFesta / qtdResp;
+  const faltante = Math.max(totalFesta-totalPago,0);
+  const splitGrid = document.getElementById('splitGrid');
+  const cards = [
+    `<div class="split-card"><div class="split-title">Total da festa</div><div class="split-value">${fmt(totalFesta)}</div></div>`,
+    `<div class="split-card"><div class="split-title">Total registrado como pago</div><div class="split-value c-green">${fmt(totalPago)}</div></div>`,
+    `<div class="split-card"><div class="split-title">Falta cobrir</div><div class="split-value c-orange">${fmt(faltante)}</div></div>`,
+    `<div class="split-card"><div class="split-title">Divisão igual por responsável</div><div class="split-value c-purple">${fmt(cotaIdeal)}</div></div>`
+  ];
+  data.responsaveis.forEach(r=>{
+    const totalResp=(r.pagamentos||[]).reduce((s,p)=>s+num(p.valor),0);
+    const saldo=totalResp-cotaIdeal;
+    cards.push(`<div class="split-card"><div class="split-title">${escH(r.name)}</div><div style="display:grid;gap:4px"><div><strong>Pagou:</strong> ${fmt(totalResp)}</div><div><strong>Saldo:</strong> <span style="color:${saldo>=0?'var(--green)':'var(--orange)'}">${saldo>=0?'pagou a mais':'falta pagar'} ${fmt(Math.abs(saldo))}</span></div></div></div>`);
+  });
+  splitGrid.innerHTML = cards.join('');
 }
 
 function renderSuppliers(){
-  document.getElementById('suppliersList').innerHTML=data.suppliers.map(s=>renderSupCard(s)).join('');
+  const wrap=document.getElementById('suppliersList');
+  if(!data.suppliers.length){ wrap.innerHTML='<div class="empty">Nenhum fornecedor cadastrado ainda. Clique em <strong>Novo fornecedor</strong>.</div>'; return; }
+  wrap.innerHTML=data.suppliers.map(s=>supCardHTML(s)).join('');
 }
-
-function renderSupCard(s){
-  const total=s.items.reduce((a,i)=>a+i.total,0);
-  const paid=s.items.reduce((a,i)=>a+i.paid,0);
-  const pct=total>0?Math.round(paid/total*100):0;
-  const isOpen=supOpen[s.id]!==false;
-  const bg=SUP_COLORS[s.color%SUP_COLORS.length];
-  const tc=SUP_TEXT[s.color%SUP_TEXT.length];
-  const catSet=[...new Set(s.items.map(i=>i.cat))].join(' · ');
-  const paidBadge=pct===100?`<span class="sup-badge" style="background:#dcfce7;color:#15803d">✓ Pago</span>`:pct>0?`<span class="sup-badge" style="background:#fef9c3;color:#854d0e">Parcial ${pct}%</span>`:`<span class="sup-badge" style="background:#fee2e2;color:#b91c1c">Pendente</span>`;
-  const itemsHTML=s.items.map(item=>{
-    const catOpts=CATS.map(c=>`<option value="${c}"${c===item.cat?' selected':''}>${c}</option>`).join('');
-    return `<div class="item-row">
-      <input class="item-input" value="${escHtml(item.name)}" placeholder="Nome do item" onchange="editItem('${s.id}','${item.id}','name',this.value)">
-      <select class="cat-select" onchange="editItem('${s.id}','${item.id}','cat',this.value);renderAll()">${catOpts}</select>
-      <input class="item-val" type="number" min="0" step="0.01" placeholder="0,00" value="${item.total||''}" onchange="editItem('${s.id}','${item.id}','total',parseFloat(this.value)||0);renderAll()">
-      <input class="item-val" type="number" min="0" step="0.01" placeholder="0,00" value="${item.paid||''}" onchange="editItem('${s.id}','${item.id}','paid',parseFloat(this.value)||0);renderAll()">
-      <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-        <button class="paid-toggle ${item.isPaid?'on':'off'}" onclick="togglePaid('${s.id}','${item.id}')" title="${item.isPaid?'Pago — clique para reverter':'Marcar como pago'}"></button>
-        <button class="del-btn" onclick="delItem('${s.id}','${item.id}')" title="Remover item">✕</button>
-      </div>
-    </div>`;
-  }).join('');
-  return `<div class="sup-card" id="sc-${s.id}">
-    <div class="sup-header" onclick="toggleSup('${s.id}')">
-      <div class="sup-avatar" style="background:${bg};color:${tc}">${s.emoji}</div>
+function supCardHTML(s){
+  const totalDisplay = supplierDisplayTotal(s);
+  const paid = Math.max(supplierPaidTotal(s), num(s.signal));
+  const pct = totalDisplay>0?Math.round((paid/totalDisplay)*100):0;
+  const open=supOpen[s.id]!==false;
+  const bg=SUP_BG[s.color%SUP_BG.length];
+  const tc=SUP_TC[s.color%SUP_TC.length];
+  const itemCats=[...new Set((s.items||[]).map(i=>i.cat).filter(Boolean))].join(' · ');
+  const badge=pct>=100?'<span class="badge badge-green">Pago</span>':pct>0?`<span class="badge badge-yellow">Parcial ${pct}%</span>`:'<span class="badge badge-red">Pendente</span>';
+  const rows=(s.items||[]).map(item=>`<tr>
+      <td><input class="td-input" value="${escH(item.name)}" placeholder="Nome do item" onchange="editItem('${s.id}','${item.id}','name',this.value);saveAndRender()"></td>
+      <td><select class="cat-sel" onchange="editItem('${s.id}','${item.id}','cat',this.value);saveAndRender()">${categoryOptions(item.cat)}</select></td>
+      <td><input class="td-num" type="number" min="0" step="0.01" value="${item.total||''}" onchange="editItem('${s.id}','${item.id}','total',this.value);saveAndRender()"></td>
+      <td><input class="td-num" type="number" min="0" step="0.01" value="${item.paid||''}" onchange="editItem('${s.id}','${item.id}','paid',this.value);saveAndRender()"></td>
+      <td style="text-align:right;white-space:nowrap"><button class="toggle ${item.isPaid?'on':'off'}" type="button" onclick="togglePaid('${s.id}','${item.id}')"></button><button class="del-btn" type="button" onclick="delItem('${s.id}','${item.id}')">✕</button></td>
+    </tr>`).join('');
+  return `<div class="sup-card">
+    <div class="sup-head" onclick="toggleSup('${s.id}')">
+      <div class="sup-avatar" style="background:${bg};color:${tc}">${escH(s.emoji||'🏪')}</div>
       <div class="sup-info">
-        <input class="sup-name-input" value="${escHtml(s.name)}" onclick="event.stopPropagation()" onchange="editSup('${s.id}','name',this.value)">
-        <div class="sup-sub">${catSet||'Sem itens'} · ${s.items.length} ${s.items.length===1?'item':'itens'}</div>
-        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <div class="sup-name">${escH(s.name)}</div>
+        <div class="sup-sub">
+          <span class="pill">Serviço: ${escH(s.serviceCategory||'Outro')}</span>
+          <span class="pill">Fornecedor: ${fmt(num(s.contractTotal))}</span>
+          <span class="pill">Sinal: ${fmt(num(s.signal))}</span>
+          ${itemCats?`<span class="pill">Itens: ${escH(itemCats)}</span>`:''}
+        </div>
+        ${s.notes?`<div class="section-help" style="margin-top:6px">${escH(s.notes)}</div>`:''}
+        <div class="prog-bar"><div class="prog-fill" style="width:${Math.min(100,pct)}%"></div></div>
       </div>
-      <div class="sup-totals">
-        <div class="sup-total-val">${fmt(total)}</div>
-        <div class="sup-paid" style="margin-top:3px">${paidBadge}</div>
+      <div class="sup-right">
+        <div class="sup-total">${fmt(totalDisplay)}</div>
+        ${badge}
         <div style="font-size:11px;color:var(--text3);margin-top:2px">pago ${fmt(paid)}</div>
       </div>
-      <span class="chevron ${isOpen?'open':''}">⌄</span>
+      <span class="chevron ${open?'open':''}">⌄</span>
     </div>
-    ${isOpen?`<div class="sup-body">
-      <div class="items-header">
-        <span>Item</span><span>Categoria</span><span style="text-align:right">Total (R$)</span><span style="text-align:right">Pago (R$)</span><span style="text-align:right">Status</span>
+    ${open?`<div class="sup-body">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="secondary-btn" type="button" onclick="event.stopPropagation();openSupplierModal('${s.id}')">Editar fornecedor</button>
+        <button class="secondary-btn" type="button" onclick="event.stopPropagation();addItem('${s.id}')">+ Novo item</button>
+        <button class="secondary-btn" type="button" style="border-color:#ef4444;color:#ef4444" onclick="event.stopPropagation();if(confirm('Remover fornecedor?'))delSupplier('${s.id}')">🗑 Remover</button>
       </div>
-      ${itemsHTML||'<div style="padding:12px 0;font-size:13px;color:var(--text3)">Nenhum item. Adicione abaixo.</div>'}
-      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-        <button class="add-item-btn" style="flex:1" onclick="addItem('${s.id}')">⊕ Novo item</button>
-        <button class="add-item-btn" style="border-color:#ef4444;color:#ef4444;flex:none;padding:6px 14px" onclick="if(confirm('Remover fornecedor?'))delSupplier('${s.id}')">🗑 Remover</button>
-      </div>
+      <table class="items-table">
+        <thead><tr><th>Item</th><th>Categoria</th><th class="r">Valor (R$)</th><th class="r">Pago (R$)</th><th class="r">Status</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="5"><div class="empty">Nenhum item fechado ainda. Clique em <strong>+ Novo item</strong> ou edite o fornecedor.</div></td></tr>`}</tbody>
+      </table>
     </div>`:''}
   </div>`;
 }
+function toggleSup(id){supOpen[id]=supOpen[id]===false?true:false;renderSuppliers();}
+function findSupplierById(id){return data.suppliers.find(s=>s.id===id);}
+function editItem(sid,iid,field,val){
+  const s=findSupplierById(sid); if(!s)return;
+  const item=s.items.find(i=>i.id===iid); if(!item)return;
+  item[field] = (field==='total'||field==='paid') ? num(val) : val;
+  if(field==='paid'){ item.isPaid = num(item.paid) >= num(item.total) && num(item.total)>0; }
+}
+function togglePaid(sid,iid){ const s=findSupplierById(sid); if(!s)return; const item=s.items.find(i=>i.id===iid); if(!item)return; item.isPaid=!item.isPaid; item.paid = item.isPaid ? num(item.total) : 0; saveAndRender(); }
+function addItem(sid){ const s=findSupplierById(sid); if(!s)return; s.items.push({id:uid(),name:'',cat:s.serviceCategory||'Outro',total:0,paid:0,isPaid:false}); supOpen[sid]=true; saveAndRender(); }
+function delItem(sid,iid){ const s=findSupplierById(sid); if(!s)return; s.items=s.items.filter(i=>i.id!==iid); saveAndRender(); }
+function delSupplier(sid){ data.suppliers=data.suppliers.filter(s=>s.id!==sid); saveAndRender(); }
+
+function openSupplierModal(id=null){
+  editingSupplierId=id;
+  document.getElementById('supFormCategory').innerHTML = categoryOptions('Outro');
+  const tbody=document.getElementById('supplierItemsEditor');
+  tbody.innerHTML='';
+  if(id){
+    const s=findSupplierById(id); if(!s)return;
+    document.getElementById('supplierModalTitle').textContent='Editar fornecedor';
+    document.getElementById('supFormName').value=s.name||'';
+    document.getElementById('supFormCategory').value=s.serviceCategory||'Outro';
+    document.getElementById('supFormEmoji').value=s.emoji||supplierEmojiForCat(s.serviceCategory);
+    document.getElementById('supFormTotal').value=num(s.contractTotal)||'';
+    document.getElementById('supFormSignal').value=num(s.signal)||'';
+    document.getElementById('supFormNotes').value=s.notes||'';
+    if((s.items||[]).length){ s.items.forEach(item=>addEditorSupplierItem(item)); } else { addEditorSupplierItem(); }
+  }else{
+    document.getElementById('supplierModalTitle').textContent='Novo fornecedor';
+    document.getElementById('supFormName').value='';
+    document.getElementById('supFormCategory').value='Outro';
+    document.getElementById('supFormEmoji').value='🏪';
+    document.getElementById('supFormTotal').value='';
+    document.getElementById('supFormSignal').value='';
+    document.getElementById('supFormNotes').value='';
+    addEditorSupplierItem();
+  }
+  document.getElementById('supplierModal').classList.add('open');
+  document.getElementById('supplierModal').setAttribute('aria-hidden','false');
+}
+function closeSupplierModal(){ document.getElementById('supplierModal').classList.remove('open'); document.getElementById('supplierModal').setAttribute('aria-hidden','true'); editingSupplierId=null; }
+function addEditorSupplierItem(item={name:'',cat:'Outro',total:''}){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input class="td-input" type="text" placeholder="Ex.: Salgados 500 un" value="${escH(item.name||'')}"></td>
+    <td><select class="cat-sel">${categoryOptions(item.cat||'Outro')}</select></td>
+    <td><input class="td-num" type="number" min="0" step="0.01" placeholder="0,00" value="${item.total||''}"></td>
+    <td style="text-align:right"><button class="del-btn" type="button">✕</button></td>
+  `;
+  tr.querySelector('.del-btn').addEventListener('click',()=>{
+    const tbody=document.getElementById('supplierItemsEditor');
+    if(tbody.children.length===1){ tr.querySelectorAll('input').forEach(inp=>inp.value=''); tr.querySelector('select').value='Outro'; return; }
+    tr.remove();
+  });
+  document.getElementById('supplierItemsEditor').appendChild(tr);
+}
+function saveSupplierFromModal(){
+  const name=document.getElementById('supFormName').value.trim();
+  const serviceCategory=document.getElementById('supFormCategory').value || 'Outro';
+  const emoji=(document.getElementById('supFormEmoji').value || supplierEmojiForCat(serviceCategory)).trim() || supplierEmojiForCat(serviceCategory);
+  const contractTotal=num(document.getElementById('supFormTotal').value);
+  const signal=num(document.getElementById('supFormSignal').value);
+  const notes=document.getElementById('supFormNotes').value.trim();
+  if(!name){ showStatus('Informe o nome do fornecedor','#ef4444'); document.getElementById('supFormName').focus(); return; }
+  const items=[...document.querySelectorAll('#supplierItemsEditor tr')].map(tr=>({
+    id:uid(),
+    name:tr.children[0].querySelector('input').value.trim(),
+    cat:tr.children[1].querySelector('select').value || serviceCategory,
+    total:num(tr.children[2].querySelector('input').value),
+    paid:0,
+    isPaid:false
+  })).filter(i=>i.name || i.total>0);
+  if(!items.length && contractTotal>0){ items.push({id:uid(),name:`Valor principal - ${name}`,cat:serviceCategory,total:contractTotal,paid:signal,isPaid:signal>=contractTotal && contractTotal>0}); }
+  const paidSeed = signal>0 && items.length ? items.map((item,idx)=> idx===0 ? {...item,paid:Math.min(signal,num(item.total)),isPaid:Math.min(signal,num(item.total))>=num(item.total) && num(item.total)>0} : item) : items;
+  if(editingSupplierId){
+    const s=findSupplierById(editingSupplierId); if(!s)return;
+    s.name=name; s.serviceCategory=serviceCategory; s.emoji=emoji; s.contractTotal=contractTotal; s.signal=signal; s.notes=notes; s.items=paidSeed; supOpen[s.id]=true;
+  }else{
+    const newId=uid();
+    data.suppliers.push({id:newId,name,emoji,color:data.suppliers.length%SUP_BG.length,serviceCategory,contractTotal,signal,notes,items:paidSeed});
+    supOpen[newId]=true;
+  }
+  closeSupplierModal();
+  goTab('fornecedores');
+  saveAndRender();
+}
+
+function openRespModal(id=null){
+  editingRespId=id;
+  document.getElementById('respPaymentsEditor').innerHTML='';
+  if(id){
+    const r=data.responsaveis.find(x=>x.id===id); if(!r)return;
+    document.getElementById('respModalTitle').textContent='Editar responsável';
+    document.getElementById('respFormName').value=r.name||'';
+    if((r.pagamentos||[]).length){ r.pagamentos.forEach(p=>addEditorPayment(p)); } else { addEditorPayment(); }
+  }else{
+    document.getElementById('respModalTitle').textContent='Novo responsável';
+    document.getElementById('respFormName').value='';
+    addEditorPayment();
+  }
+  document.getElementById('respModal').classList.add('open');
+  document.getElementById('respModal').setAttribute('aria-hidden','false');
+}
+function closeRespModal(){ document.getElementById('respModal').classList.remove('open'); document.getElementById('respModal').setAttribute('aria-hidden','true'); editingRespId=null; }
+function addEditorPayment(payment={desc:'',valor:''}){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input class="pag-desc" type="text" placeholder="Ex.: Sinal do buffet" value="${escH(payment.desc||'')}"></td><td><input class="pag-val" type="number" min="0" step="0.01" placeholder="0,00" value="${payment.valor||''}"></td><td style="text-align:right"><button class="del-btn" type="button">✕</button></td>`;
+  tr.querySelector('.del-btn').addEventListener('click',()=>{
+    const tbody=document.getElementById('respPaymentsEditor');
+    if(tbody.children.length===1){ tr.querySelectorAll('input').forEach(inp=>inp.value=''); return; }
+    tr.remove();
+  });
+  document.getElementById('respPaymentsEditor').appendChild(tr);
+}
+function saveRespFromModal(){
+  const name=document.getElementById('respFormName').value.trim();
+  if(!name){ showStatus('Informe o nome do responsável','#ef4444'); document.getElementById('respFormName').focus(); return; }
+  const pagamentos=[...document.querySelectorAll('#respPaymentsEditor tr')].map(tr=>({id:uid(),desc:tr.children[0].querySelector('input').value.trim(),valor:num(tr.children[1].querySelector('input').value)})).filter(p=>p.desc || p.valor>0);
+  if(editingRespId){
+    const r=data.responsaveis.find(x=>x.id===editingRespId); if(!r)return;
+    r.name=name; r.pagamentos=pagamentos;
+  }else{
+    data.responsaveis.push({id:uid(),name,color:data.responsaveis.length%RESP_COLORS.length,pagamentos});
+  }
+  closeRespModal();
+  goTab('responsaveis');
+  saveAndRender();
+}
+
+function renderResponsaveis(){
+  const totalGeral=data.suppliers.reduce((s,sup)=>s+supplierDisplayTotal(sup),0);
+  const wrap=document.getElementById('respGrid');
+  if(!data.responsaveis.length){ wrap.innerHTML='<div class="empty">Nenhum responsável cadastrado ainda. Clique em <strong>Novo responsável</strong>.</div>'; }
+  else{
+    wrap.innerHTML=data.responsaveis.map(r=>{
+      const totalResp=(r.pagamentos||[]).reduce((s,p)=>s+num(p.valor),0);
+      const pct=totalGeral>0?Math.round((totalResp/totalGeral)*100):0;
+      const color=RESP_COLORS[r.color%RESP_COLORS.length];
+      const initials=(r.name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      const pags=(r.pagamentos||[]).map(p=>`<div class="pag-row"><input class="pag-desc" value="${escH(p.desc)}" placeholder="Descrição do pagamento" onchange="editPag('${r.id}','${p.id}','desc',this.value);saveAndRender()"><input class="pag-val" type="number" min="0" step="0.01" value="${p.valor||''}" placeholder="0" onchange="editPag('${r.id}','${p.id}','valor',this.value);saveAndRender()"><button class="del-btn" type="button" onclick="delPag('${r.id}','${p.id}')">✕</button></div>`).join('');
+      return `<div class="resp-card"><div class="resp-top"><div class="resp-avatar" style="background:${color}20;color:${color}">${escH(initials||'?')}</div><input class="resp-name" value="${escH(r.name)}" onchange="editResp('${r.id}','name',this.value);saveAndRender()"><button class="del-btn" type="button" onclick="if(confirm('Remover responsável?'))delResp('${r.id}')">✕</button></div><div class="resp-total" style="color:${color}">${fmt(totalResp)}</div><div class="resp-pago">${pct}% do total da festa</div><div class="prog-bar"><div class="prog-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="secondary-btn" type="button" onclick="openRespModal('${r.id}')">Editar</button><button class="secondary-btn" type="button" onclick="addPag('${r.id}')">+ Pagamento</button></div><div style="margin-top:12px">${pags || '<div class="empty">Nenhum pagamento registrado.</div>'}</div></div>`;
+    }).join('');
+  }
+  const totalContrib=data.responsaveis.reduce((s,r)=>s+(r.pagamentos||[]).reduce((a,p)=>a+num(p.valor),0),0);
+  const totalGastos=data.suppliers.reduce((s,sup)=>s+supplierDisplayTotal(sup),0);
+  const falta=Math.max(totalGastos-totalContrib,0);
+  const cotaIdeal=totalGastos/(data.responsaveis.length||1);
+  document.getElementById('respSummaryCard').innerHTML=`<div class="card-title">📊 Resumo das contribuições</div><div class="resp-summary"><div class="resp-summary-row"><span>Total da festa</span><strong>${fmt(totalGastos)}</strong></div><div class="resp-summary-row"><span>Total contribuído</span><strong class="c-green">${fmt(totalContrib)}</strong></div><div class="resp-summary-row"><span>Ainda falta cobrir</span><strong class="c-orange">${fmt(falta)}</strong></div><div class="resp-summary-row"><span>Divisão igual por pessoa</span><strong class="c-purple">${fmt(cotaIdeal)}</strong></div></div>`;
+}
+function editResp(rid,field,val){ const r=data.responsaveis.find(x=>x.id===rid); if(r){ r[field]=val; } }
+function addPag(rid){ const r=data.responsaveis.find(x=>x.id===rid); if(!r)return; r.pagamentos.push({id:uid(),desc:'',valor:0}); saveAndRender(); }
+function editPag(rid,pid,field,val){ const r=data.responsaveis.find(x=>x.id===rid); if(!r)return; const p=r.pagamentos.find(x=>x.id===pid); if(!p)return; p[field]=(field==='valor')?num(val):val; }
+function delPag(rid,pid){ const r=data.responsaveis.find(x=>x.id===rid); if(!r)return; r.pagamentos=r.pagamentos.filter(x=>x.id!==pid); saveAndRender(); }
+function delResp(rid){ data.responsaveis=data.responsaveis.filter(x=>x.id!==rid); saveAndRender(); }
 
 function renderChecklist(){
-  const cats=[...new Set(data.checklist.map(c=>c.cat))];
-  document.getElementById('checklistWrap').innerHTML=cats.map(cat=>{
+  const cats=[...new Set(data.checklist.map(c=>c.cat).filter(Boolean))];
+  const container=document.getElementById('checklistWrap');
+  if(!cats.length){ container.innerHTML='<div class="empty">Nenhuma tarefa de checklist cadastrada ainda.</div>'; return; }
+  container.innerHTML=cats.map(cat=>{
     const items=data.checklist.filter(c=>c.cat===cat);
     const done=items.filter(i=>i.done).length;
-    return `<div class="chk-group">
-      <div class="chk-group-header">
-        <span>${cat}</span>
-        <span style="font-size:12px;color:var(--text3);font-weight:400">${done}/${items.length}</span>
-      </div>
-      ${items.map(i=>`<div class="chk-item ${i.done?'done':''}" id="ki-${i.id}">
-        ${i.urgente&&!i.done?'<div class="urgente-dot" title="Urgente"></div>':'<div style="width:7px"></div>'}
-        <input type="checkbox" ${i.done?'checked':''} onchange="toggleChk('${i.id}')">
-        <div class="chk-label"><input value="${escHtml(i.text)}" onchange="editChk('${i.id}',this.value)"></div>
-      </div>`).join('')}
-    </div>`;
+    return `<div class="chk-group"><div class="chk-head"><span>${escH(cat)}</span><span class="muted">${done}/${items.length}</span></div>${items.map(i=>`<div class="chk-item ${i.done?'done':''}">${i.urgente&&!i.done?'<div class="urgente" title="Urgente"></div>':'<div style="width:7px"></div>'}<input type="checkbox" ${i.done?'checked':''} onchange="toggleChk('${i.id}')"><input class="chk-text" value="${escH(i.text)}" onchange="editChk('${i.id}',this.value)"><button class="del-btn" type="button" onclick="delChk('${i.id}')">✕</button></div>`).join('')}<button class="add-chk-btn" type="button" onclick="addChk('${cat}')">⊕ Nova tarefa em ${escH(cat)}</button></div>`;
   }).join('');
 }
+function toggleChk(id){ const item=data.checklist.find(c=>c.id===id); if(item){ item.done=!item.done; saveAndRender(); } }
+function editChk(id,val){ const item=data.checklist.find(c=>c.id===id); if(item){ item.text=val; saveData(); } }
+function delChk(id){ data.checklist=data.checklist.filter(c=>c.id!==id); saveAndRender(); }
+function addChk(cat){ data.checklist.push({id:uid(),done:false,text:'',urgente:false,cat}); saveAndRender(); }
+function saveAndRender(){ normalizeData(); saveData(); renderAll(); }
+function toggleTheme(){ dark=!dark; document.getElementById('app').classList.toggle('dark',dark); document.querySelector('.theme-btn').textContent = dark ? '☀️' : '🌙'; }
 
-function renderAll(){
-  renderSummary();
-  if(document.getElementById('tab-fornecedores').classList.contains('active'))renderSuppliers();
-  if(document.getElementById('tab-checklist').classList.contains('active'))renderChecklist();
-  saveData();
-}
-
-function toggleSup(id){supOpen[id]=supOpen[id]===false;renderSuppliers();}
-function toggleTheme(){dark=!dark;document.getElementById('app').classList.toggle('dark',dark);document.querySelector('.theme-btn').textContent=dark?'☀️':'🌙';}
-
-function switchTab(tab,btn){
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  btn.classList.add('active');
-  if(tab==='fornecedores')renderSuppliers();
-  if(tab==='checklist')renderChecklist();
-}
-
-function editItem(sid,iid,field,val){
-  const s=data.suppliers.find(s=>s.id===sid);
-  if(s){const item=s.items.find(i=>i.id===iid);if(item){item[field]=val;saveData();}}
-}
-function editSup(sid,field,val){
-  const s=data.suppliers.find(s=>s.id===sid);if(s){s[field]=val;saveData();}
-}
-function togglePaid(sid,iid){
-  const s=data.suppliers.find(s=>s.id===sid);
-  if(!s)return;
-  const item=s.items.find(i=>i.id===iid);
-  if(!item)return;
-  item.isPaid=!item.isPaid;
-  if(item.isPaid)item.paid=item.total;
-  renderAll();
-}
-function addItem(sid){
-  const s=data.suppliers.find(s=>s.id===sid);
-  if(!s)return;
-  s.items.push({id:uid(),name:'',cat:'Outro',total:0,paid:0,isPaid:false});
-  supOpen[sid]=true;
-  renderAll();
-}
-function delItem(sid,iid){
-  const s=data.suppliers.find(s=>s.id===sid);
-  if(!s)return;
-  s.items=s.items.filter(i=>i.id!==iid);
-  renderAll();
-}
-function delSupplier(sid){
-  data.suppliers=data.suppliers.filter(s=>s.id!==sid);
-  renderAll();
-}
-function addSupplier(){
-  const id=uid();
-  data.suppliers.push({id,name:'Novo fornecedor',emoji:'🏪',color:data.suppliers.length%6,items:[]});
-  supOpen[id]=true;
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-fornecedores').classList.add('active');
-  document.querySelectorAll('.nav-btn')[1].classList.add('active');
-  renderAll();
-}
-function toggleChk(id){
-  const item=data.checklist.find(c=>c.id===id);
-  if(item){item.done=!item.done;renderChecklist();saveData();}
-}
-function editChk(id,val){
-  const item=data.checklist.find(c=>c.id===id);
-  if(item){item.text=val;saveData();}
-}
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
+window.addEventListener('click',e=>{ if(e.target.id==='supplierModal')closeSupplierModal(); if(e.target.id==='respModal')closeRespModal(); });
+window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSupplierModal(); closeRespModal(); } });
 </script>
 </body>
 </html>
