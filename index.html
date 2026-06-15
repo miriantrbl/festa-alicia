@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Festa da Alícia 🎉</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f0f8;--surface:#fff;--surface2:#f5f5fc;--text:#1a1a2e;--text2:#6b6b8a;--text3:#a0a0c0;
+  --accent:#6c63ff;--border:#e4e4f0;
+}
+.dark{
+  --bg:#12121e;--surface:#1e1e30;--surface2:#252538;--text:#e8e8f8;--text2:#9090b0;--text3:#5a5a7a;
+  --border:#2a2a42;--accent:#7c75ff;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .2s,color .2s}
+input,select{font-family:inherit}
+.app{width:100%;max-width:960px;margin:0 auto}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:10}
+.header-left{display:flex;align-items:center;gap:10px}
+.party-icon{font-size:22px}
+.party-name-input{font-size:20px;font-weight:700;color:var(--text);border:none;background:transparent;outline:none;max-width:240px}
+.header-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:4px}
+.meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.meta-item input{font-size:12px;color:var(--text2);border:none;background:transparent;outline:none;max-width:140px}
+.header-right{display:flex;align-items:center;gap:10px}
+.theme-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text2)}
+.budget-badge{background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:7px 16px;border-radius:20px}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:4px;overflow-x:auto}
+.nav-btn{padding:12px 18px;font-size:13px;font-weight:500;color:var(--text2);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.nav-btn:hover{color:var(--text)}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-add{margin-left:auto;color:var(--accent)}
+.content{padding:20px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.sum-label{font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+.sum-value{font-size:22px;font-weight:700}
+.sum-value.green{color:#22c55e}
+.sum-value.orange{color:#f59e0b}
+.sum-value.purple{color:var(--accent)}
+.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}
+.section-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.donut-wrap{position:relative;width:180px;height:180px;flex-shrink:0}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.donut-center-val{font-size:18px;font-weight:700;color:var(--text)}
+.donut-center-label{font-size:10px;color:var(--text3)}
+.cat-list{flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px}
+.cat-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border-radius:10px}
+.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cat-name{flex:1;font-size:13px;color:var(--text)}
+.cat-vals{text-align:right}
+.cat-amount{font-size:13px;font-weight:600;color:var(--text)}
+.cat-pct{font-size:11px;color:var(--text3)}
+.suppliers{display:flex;flex-direction:column;gap:14px}
+.sup-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.sup-header{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.sup-avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sup-info{flex:1;min-width:0}
+.sup-name-input{font-size:14px;font-weight:600;color:var(--text);border:none;background:transparent;outline:none;width:100%;max-width:220px}
+.sup-sub{font-size:12px;color:var(--text2);margin-top:1px}
+.sup-totals{text-align:right;flex-shrink:0}
+.sup-total-val{font-size:15px;font-weight:700;color:var(--text)}
+.sup-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.sup-body{padding:0 18px 14px;border-top:1px solid var(--border)}
+.items-header{display:grid;grid-template-columns:2fr 1fr 90px 90px 70px;gap:8px;padding:10px 0 6px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.item-row{display:grid;grid-template-columns:2fr 1fr 90px 90px 70px;gap:8px;padding:7px 0;border-top:1px solid var(--border);align-items:center}
+.item-input{font-size:13px;color:var(--text);border:none;background:transparent;outline:none;width:100%}
+.item-input:focus{background:var(--surface2);border-radius:4px;padding:0 4px}
+.item-val{font-size:13px;color:var(--text);border:1px solid var(--border);background:var(--surface2);outline:none;width:100%;text-align:right;border-radius:6px;padding:3px 6px}
+.item-val:focus{border-color:var(--accent)}
+.cat-select{font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);border-radius:6px;padding:3px 6px;outline:none;cursor:pointer;width:100%}
+.paid-toggle{width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.paid-toggle.on{background:#22c55e}
+.paid-toggle.off{background:var(--border)}
+.add-item-btn{margin-top:8px;font-size:12px;color:var(--accent);border:1px dashed var(--accent);background:transparent;border-radius:8px;padding:6px 12px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:4px}
+.add-sup-btn{background:var(--surface);border:2px dashed var(--border);border-radius:14px;padding:18px;text-align:center;font-size:13px;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.add-sup-btn:hover{border-color:var(--accent);color:var(--accent)}
+.prog-bar{height:4px;background:var(--surface2);border-radius:2px;margin-top:6px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;background:#22c55e;transition:width .3s}
+.chevron{font-size:18px;color:var(--text3);transition:transform .2s;flex-shrink:0}
+.chevron.open{transform:rotate(180deg)}
+.del-btn{font-size:13px;color:var(--text3);border:none;background:transparent;cursor:pointer;padding:2px 6px;border-radius:4px}
+.del-btn:hover{color:#ef4444;background:var(--surface2)}
+.checklist{display:flex;flex-direction:column;gap:12px}
+.chk-group{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.chk-group-header{padding:12px 16px;font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
+.chk-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--border)}
+.chk-item input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.chk-label{flex:1;font-size:13px;color:var(--text)}
+.chk-label input{font-size:13px;color:var(--text);border:none;background:transparent;outline:none;width:100%}
+.chk-label input:focus{background:var(--surface2);border-radius:4px;padding:0 4px}
+.chk-item.done .chk-label input{text-decoration:line-through;color:var(--text3)}
+.urgente-dot{width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0}
+.tab-content{display:none}
+.tab-content.active{display:block}
+@media(max-width:600px){
+  .items-header,.item-row{grid-template-columns:1fr 80px 70px 50px}
+  .items-header span:nth-child(2),.item-row .cat-select{display:none}
+  .party-name-input{max-width:150px;font-size:16px}
+  .header-meta{gap:10px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<div class="header">
+  <div>
+    <div class="header-left">
+      <span class="party-icon">🎉</span>
+      <input class="party-name-input" value="Festa da Alícia" id="partyName">
+    </div>
+    <div class="header-meta">
+      <div class="meta-item">📅 <input id="partyDate" value="Data não definida"></div>
+      <div class="meta-item">🕐 <input id="partyTime" value="Horário não definido"></div>
+      <div class="meta-item">📍 <input id="partyLocal" value="Local não definido"></div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="theme-btn" onclick="toggleTheme()" aria-label="Alternar tema">🌙</button>
+    <div class="budget-badge" id="headerTotal">R$ 0,00</div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="switchTab('dashboard',this)">⊞ Dashboard</button>
+  <button class="nav-btn" onclick="switchTab('fornecedores',this)">🏪 Fornecedores</button>
+  <button class="nav-btn" onclick="switchTab('checklist',this)">✅ Checklist</button>
+  <button class="nav-btn nav-add" onclick="addSupplier()">⊕ Adicionar fornecedor</button>
+</div>
+
+<div class="content tab-content active" id="tab-dashboard">
+  <div class="summary" id="summaryCards"></div>
+  <div class="chart-section">
+    <div class="section-title">💰 Divisão por categoria</div>
+    <div class="chart-wrap">
+      <div class="donut-wrap">
+        <canvas id="donutChart" width="180" height="180" role="img" aria-label="Gráfico de rosca com divisão de gastos por categoria"></canvas>
+        <div class="donut-center">
+          <div class="donut-center-val" id="donutTotal">R$ 0</div>
+          <div class="donut-center-label">total</div>
+        </div>
+      </div>
+      <div class="cat-list" id="catList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="content tab-content" id="tab-fornecedores">
+  <div class="suppliers" id="suppliersList"></div>
+  <button class="add-sup-btn" onclick="addSupplier()" style="margin-top:14px">⊕ Novo fornecedor</button>
+</div>
+
+<div class="content tab-content" id="tab-checklist">
+  <div class="checklist" id="checklistWrap"></div>
+</div>
+
+</div>
+
+<script>
+const CATS=['Salão','Buffet','Decoração','Bolo','Lembrancinhas','Outro'];
+const CAT_COLORS=['#6c63ff','#ec4899','#14b8a6','#f59e0b','#3b82f6','#a855f7','#22c55e','#ef4444'];
+const SUP_COLORS=['#ede9fe','#fce7f3','#ccfbf1','#fef3c7','#dbeafe','#f3e8ff'];
+const SUP_TEXT=['#7c3aed','#be185d','#0f766e','#b45309','#1d4ed8','#7e22ce'];
+
+let dark=false;
+let supOpen={};
+let donutChart=null;
+
+const STORAGE_KEY='festa_alicia_data';
+
+const defaultData={
+  suppliers:[
+    {id:'s1',name:'Salão de Festa',emoji:'🏛️',color:0,items:[
+      {id:'i1',name:'Aluguel do salão',cat:'Salão',total:400,paid:0,isPaid:false},
+    ]},
+    {id:'s2',name:'Buffet',emoji:'🍕',color:1,items:[
+      {id:'i2',name:'Buffet completo (salgadinhos, capeios, cachorro quente)',cat:'Buffet',total:360,paid:0,isPaid:false},
+      {id:'i3',name:'Fritadeira / caldo',cat:'Buffet',total:80,paid:80,isPaid:true},
+      {id:'i4',name:'Estação mini pizza',cat:'Buffet',total:350,paid:0,isPaid:false},
+      {id:'i5',name:'Salgados 500 un (ou 1000 un = R$470)',cat:'Buffet',total:289,paid:0,isPaid:false},
+    ]},
+    {id:'s3',name:'Terra Decoração',emoji:'🌿',color:2,items:[
+      {id:'i6',name:'Mesa de decoração',cat:'Decoração',total:350,paid:250,isPaid:false},
+    ]},
+    {id:'s4',name:'Confeitaria',emoji:'🎂',color:3,items:[
+      {id:'i7',name:'Bolo da mesa',cat:'Bolo',total:950,paid:475,isPaid:false},
+      {id:'i8',name:'200 docinhos',cat:'Bolo',total:0,paid:0,isPaid:false},
+    ]},
+    {id:'s5',name:'Compras Próprias',emoji:'🛒',color:4,items:[
+      {id:'i9',name:'Mini pizza congelada',cat:'Buffet',total:0,paid:0,isPaid:false},
+      {id:'i10',name:'Decorações do bolo',cat:'Bolo',total:0,paid:0,isPaid:false},
+      {id:'i11',name:'Vela do bolo',cat:'Bolo',total:0,paid:0,isPaid:true},
+      {id:'i12',name:'Fita para lembrancinhas',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
+      {id:'i13',name:'Toalhas das mesas + discos',cat:'Decoração',total:0,paid:0,isPaid:true},
+      {id:'i14',name:'60 tiaras transparentes',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
+      {id:'i15',name:'60 cadernos de desenho',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
+      {id:'i16',name:'60 giz de cera',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
+      {id:'i17',name:'60 bolinhas de sabão',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
+      {id:'i18',name:'Conteúdo centro de mesa',cat:'Decoração',total:0,paid:0,isPaid:false},
+      {id:'i19',name:'Bolsas / necessaire',cat:'Lembrancinhas',total:0,paid:0,isPaid:false},
+    ]},
+  ],
+  checklist:[
+    {id:'k1',done:false,text:'Pagar saldo do salão (R$ 400)',urgente:true,cat:'Salão'},
+    {id:'k2',done:false,text:'Pagar saldo do buffet (R$ 360)',urgente:true,cat:'Buffet'},
+    {id:'k3',done:false,text:'Pagar saldo mesa do Terra (R$ 100)',urgente:false,cat:'Decoração'},
+    {id:'k4',done:true,text:'Comprar vela do bolo',urgente:false,cat:'Bolo'},
+    {id:'k5',done:true,text:'Comprar toalhas das mesas e discos',urgente:false,cat:'Decoração'},
+    {id:'k6',done:false,text:'Pintar decoração de centro de mesa',urgente:false,cat:'Decoração'},
+    {id:'k7',done:false,text:'Comprar decorações do bolo',urgente:false,cat:'Bolo'},
+    {id:'k8',done:false,text:'Comprar mini pizza congelada',urgente:false,cat:'Buffet'},
+    {id:'k9',done:false,text:'Comprar fita para lembrancinhas',urgente:false,cat:'Lembrancinhas'},
+    {id:'k10',done:false,text:'Definir qtd salgados: 500 ou 1000',urgente:true,cat:'Buffet'},
+    {id:'k11',done:false,text:'Providenciar 400 pães (cachorro quente)',urgente:false,cat:'Buffet'},
+    {id:'k12',done:false,text:'60 tiaras, cadernos, giz de cera, bolinhas de sabão',urgente:false,cat:'Lembrancinhas'},
+  ]
+};
+
+firebase.initializeApp({
+  databaseURL:'https://festa-alicia-default-rtdb.firebaseio.com'
+});
+const db=firebase.database();
+const ref=db.ref('festa');
+
+const data={suppliers:[],checklist:[]};
+let ready=false;
+
+function showLoading(on){
+  let el=document.getElementById('loadingBar');
+  if(!el){
+    el=document.createElement('div');
+    el.id='loadingBar';
+    el.style.cssText='position:fixed;top:0;left:0;width:100%;height:3px;background:var(--accent);z-index:999;transition:opacity .3s';
+    document.body.prepend(el);
+  }
+  el.style.opacity=on?'1':'0';
+}
+
+showLoading(true);
+ref.on('value',snap=>{
+  const val=snap.val();
+  if(val){
+    data.suppliers=val.suppliers||[];
+    data.checklist=val.checklist||[];
+  } else {
+    data.suppliers=JSON.parse(JSON.stringify(defaultData.suppliers));
+    data.checklist=JSON.parse(JSON.stringify(defaultData.checklist));
+    ref.set(data);
+  }
+  ready=true;
+  showLoading(false);
+  renderAll();
+});
+
+function saveData(){
+  if(!ready)return;
+  ref.set(JSON.parse(JSON.stringify(data)));
+}
+
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+
+function calcTotals(){
+  let total=0,paid=0;
+  data.suppliers.forEach(s=>s.items.forEach(i=>{total+=i.total||0;paid+=i.paid||0;}));
+  return{total,paid,pending:total-paid,sups:data.suppliers.length};
+}
+
+function calcByCat(){
+  const map={};
+  data.suppliers.forEach(s=>s.items.forEach(i=>{
+    if(!map[i.cat])map[i.cat]={total:0,paid:0};
+    map[i.cat].total+=i.total||0;map[i.cat].paid+=i.paid||0;
+  }));
+  return map;
+}
+
+function fmt(v){return'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+
+function renderSummary(){
+  const t=calcTotals();
+  document.getElementById('headerTotal').textContent=fmt(t.total);
+  document.getElementById('summaryCards').innerHTML=`
+    <div class="sum-card"><div class="sum-label">Total geral</div><div class="sum-value">${fmt(t.total)}</div></div>
+    <div class="sum-card"><div class="sum-label">Total pago</div><div class="sum-value green">${fmt(t.paid)}</div></div>
+    <div class="sum-card"><div class="sum-label">Pendente</div><div class="sum-value orange">${fmt(t.pending)}</div></div>
+    <div class="sum-card"><div class="sum-label">Fornecedores</div><div class="sum-value purple">${t.sups}</div></div>
+  `;
+  renderChart();
+}
+
+function renderChart(){
+  const map=calcByCat();
+  const cats=Object.keys(map).filter(c=>map[c].total>0);
+  const total=cats.reduce((s,c)=>s+map[c].total,0)||1;
+  document.getElementById('donutTotal').textContent='R$ '+Math.round(total).toLocaleString('pt-BR');
+  document.getElementById('catList').innerHTML=cats.length?cats.map((c,i)=>`
+    <div class="cat-row">
+      <div class="cat-dot" style="background:${CAT_COLORS[i%CAT_COLORS.length]}"></div>
+      <div class="cat-name">${c}</div>
+      <div class="cat-vals">
+        <div class="cat-amount">${fmt(map[c].total)}</div>
+        <div class="cat-pct">${Math.round(map[c].total/total*100)}%</div>
+      </div>
+    </div>`).join(''):'<div style="color:var(--text3);font-size:13px">Nenhum gasto registrado ainda</div>';
+  const canvas=document.getElementById('donutChart');
+  if(!canvas)return;
+  if(donutChart)donutChart.destroy();
+  if(!cats.length){
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,180,180);
+    ctx.beginPath();ctx.arc(90,90,70,0,Math.PI*2);
+    ctx.strokeStyle='#e4e4f0';ctx.lineWidth=28;ctx.stroke();
+    return;
+  }
+  donutChart=new Chart(canvas,{
+    type:'doughnut',
+    data:{labels:cats,datasets:[{data:cats.map(c=>map[c].total),backgroundColor:cats.map((_,i)=>CAT_COLORS[i%CAT_COLORS.length]),borderWidth:2,borderColor:'transparent'}]},
+    options:{responsive:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}}}
+  });
+}
+
+function renderSuppliers(){
+  document.getElementById('suppliersList').innerHTML=data.suppliers.map(s=>renderSupCard(s)).join('');
+}
+
+function renderSupCard(s){
+  const total=s.items.reduce((a,i)=>a+i.total,0);
+  const paid=s.items.reduce((a,i)=>a+i.paid,0);
+  const pct=total>0?Math.round(paid/total*100):0;
+  const isOpen=supOpen[s.id]!==false;
+  const bg=SUP_COLORS[s.color%SUP_COLORS.length];
+  const tc=SUP_TEXT[s.color%SUP_TEXT.length];
+  const catSet=[...new Set(s.items.map(i=>i.cat))].join(' · ');
+  const paidBadge=pct===100?`<span class="sup-badge" style="background:#dcfce7;color:#15803d">✓ Pago</span>`:pct>0?`<span class="sup-badge" style="background:#fef9c3;color:#854d0e">Parcial ${pct}%</span>`:`<span class="sup-badge" style="background:#fee2e2;color:#b91c1c">Pendente</span>`;
+  const itemsHTML=s.items.map(item=>{
+    const catOpts=CATS.map(c=>`<option value="${c}"${c===item.cat?' selected':''}>${c}</option>`).join('');
+    return `<div class="item-row">
+      <input class="item-input" value="${escHtml(item.name)}" placeholder="Nome do item" onchange="editItem('${s.id}','${item.id}','name',this.value)">
+      <select class="cat-select" onchange="editItem('${s.id}','${item.id}','cat',this.value);renderAll()">${catOpts}</select>
+      <input class="item-val" type="number" min="0" step="0.01" placeholder="0,00" value="${item.total||''}" onchange="editItem('${s.id}','${item.id}','total',parseFloat(this.value)||0);renderAll()">
+      <input class="item-val" type="number" min="0" step="0.01" placeholder="0,00" value="${item.paid||''}" onchange="editItem('${s.id}','${item.id}','paid',parseFloat(this.value)||0);renderAll()">
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+        <button class="paid-toggle ${item.isPaid?'on':'off'}" onclick="togglePaid('${s.id}','${item.id}')" title="${item.isPaid?'Pago — clique para reverter':'Marcar como pago'}"></button>
+        <button class="del-btn" onclick="delItem('${s.id}','${item.id}')" title="Remover item">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="sup-card" id="sc-${s.id}">
+    <div class="sup-header" onclick="toggleSup('${s.id}')">
+      <div class="sup-avatar" style="background:${bg};color:${tc}">${s.emoji}</div>
+      <div class="sup-info">
+        <input class="sup-name-input" value="${escHtml(s.name)}" onclick="event.stopPropagation()" onchange="editSup('${s.id}','name',this.value)">
+        <div class="sup-sub">${catSet||'Sem itens'} · ${s.items.length} ${s.items.length===1?'item':'itens'}</div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="sup-totals">
+        <div class="sup-total-val">${fmt(total)}</div>
+        <div class="sup-paid" style="margin-top:3px">${paidBadge}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">pago ${fmt(paid)}</div>
+      </div>
+      <span class="chevron ${isOpen?'open':''}">⌄</span>
+    </div>
+    ${isOpen?`<div class="sup-body">
+      <div class="items-header">
+        <span>Item</span><span>Categoria</span><span style="text-align:right">Total (R$)</span><span style="text-align:right">Pago (R$)</span><span style="text-align:right">Status</span>
+      </div>
+      ${itemsHTML||'<div style="padding:12px 0;font-size:13px;color:var(--text3)">Nenhum item. Adicione abaixo.</div>'}
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+        <button class="add-item-btn" style="flex:1" onclick="addItem('${s.id}')">⊕ Novo item</button>
+        <button class="add-item-btn" style="border-color:#ef4444;color:#ef4444;flex:none;padding:6px 14px" onclick="if(confirm('Remover fornecedor?'))delSupplier('${s.id}')">🗑 Remover</button>
+      </div>
+    </div>`:''}
+  </div>`;
+}
+
+function renderChecklist(){
+  const cats=[...new Set(data.checklist.map(c=>c.cat))];
+  document.getElementById('checklistWrap').innerHTML=cats.map(cat=>{
+    const items=data.checklist.filter(c=>c.cat===cat);
+    const done=items.filter(i=>i.done).length;
+    return `<div class="chk-group">
+      <div class="chk-group-header">
+        <span>${cat}</span>
+        <span style="font-size:12px;color:var(--text3);font-weight:400">${done}/${items.length}</span>
+      </div>
+      ${items.map(i=>`<div class="chk-item ${i.done?'done':''}" id="ki-${i.id}">
+        ${i.urgente&&!i.done?'<div class="urgente-dot" title="Urgente"></div>':'<div style="width:7px"></div>'}
+        <input type="checkbox" ${i.done?'checked':''} onchange="toggleChk('${i.id}')">
+        <div class="chk-label"><input value="${escHtml(i.text)}" onchange="editChk('${i.id}',this.value)"></div>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderAll(){
+  renderSummary();
+  if(document.getElementById('tab-fornecedores').classList.contains('active'))renderSuppliers();
+  if(document.getElementById('tab-checklist').classList.contains('active'))renderChecklist();
+  saveData();
+}
+
+function toggleSup(id){supOpen[id]=supOpen[id]===false;renderSuppliers();}
+function toggleTheme(){dark=!dark;document.getElementById('app').classList.toggle('dark',dark);document.querySelector('.theme-btn').textContent=dark?'☀️':'🌙';}
+
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  if(tab==='fornecedores')renderSuppliers();
+  if(tab==='checklist')renderChecklist();
+}
+
+function editItem(sid,iid,field,val){
+  const s=data.suppliers.find(s=>s.id===sid);
+  if(s){const item=s.items.find(i=>i.id===iid);if(item){item[field]=val;saveData();}}
+}
+function editSup(sid,field,val){
+  const s=data.suppliers.find(s=>s.id===sid);if(s){s[field]=val;saveData();}
+}
+function togglePaid(sid,iid){
+  const s=data.suppliers.find(s=>s.id===sid);
+  if(!s)return;
+  const item=s.items.find(i=>i.id===iid);
+  if(!item)return;
+  item.isPaid=!item.isPaid;
+  if(item.isPaid)item.paid=item.total;
+  renderAll();
+}
+function addItem(sid){
+  const s=data.suppliers.find(s=>s.id===sid);
+  if(!s)return;
+  s.items.push({id:uid(),name:'',cat:'Outro',total:0,paid:0,isPaid:false});
+  supOpen[sid]=true;
+  renderAll();
+}
+function delItem(sid,iid){
+  const s=data.suppliers.find(s=>s.id===sid);
+  if(!s)return;
+  s.items=s.items.filter(i=>i.id!==iid);
+  renderAll();
+}
+function delSupplier(sid){
+  data.suppliers=data.suppliers.filter(s=>s.id!==sid);
+  renderAll();
+}
+function addSupplier(){
+  const id=uid();
+  data.suppliers.push({id,name:'Novo fornecedor',emoji:'🏪',color:data.suppliers.length%6,items:[]});
+  supOpen[id]=true;
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-fornecedores').classList.add('active');
+  document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  renderAll();
+}
+function toggleChk(id){
+  const item=data.checklist.find(c=>c.id===id);
+  if(item){item.done=!item.done;renderChecklist();saveData();}
+}
+function editChk(id,val){
+  const item=data.checklist.find(c=>c.id===id);
+  if(item){item.text=val;saveData();}
+}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+</script>
+</body>
+</html>
