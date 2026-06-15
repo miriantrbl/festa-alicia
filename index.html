@@ -231,37 +231,52 @@ const ref=db.ref('festa');
 
 const data={suppliers:[],checklist:[]};
 let ready=false;
+let saving=false;
 
-function showLoading(on){
-  let el=document.getElementById('loadingBar');
+function showStatus(msg,color){
+  let el=document.getElementById('statusBar');
   if(!el){
     el=document.createElement('div');
-    el.id='loadingBar';
-    el.style.cssText='position:fixed;top:0;left:0;width:100%;height:3px;background:var(--accent);z-index:999;transition:opacity .3s';
-    document.body.prepend(el);
+    el.id='statusBar';
+    el.style.cssText='position:fixed;bottom:12px;right:12px;font-size:12px;padding:6px 12px;border-radius:20px;z-index:999;transition:opacity .5s;font-family:inherit';
+    document.body.appendChild(el);
   }
-  el.style.opacity=on?'1':'0';
+  el.textContent=msg;
+  el.style.background=color||'#22c55e';
+  el.style.color='#fff';
+  el.style.opacity='1';
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.style.opacity='0',2500);
 }
 
-showLoading(true);
+showStatus('Conectando...','#6c63ff');
+
 ref.on('value',snap=>{
+  if(saving)return;
   const val=snap.val();
-  if(val){
-    data.suppliers=val.suppliers||[];
+  if(val&&val.suppliers){
+    data.suppliers=val.suppliers;
     data.checklist=val.checklist||[];
-  } else {
+  } else if(!ready){
     data.suppliers=JSON.parse(JSON.stringify(defaultData.suppliers));
     data.checklist=JSON.parse(JSON.stringify(defaultData.checklist));
-    ref.set(data);
+    ref.set(JSON.parse(JSON.stringify(data)));
   }
-  ready=true;
-  showLoading(false);
-  renderAll();
+  if(!ready){
+    ready=true;
+    showStatus('Conectado ✓','#22c55e');
+    renderAll();
+  } else {
+    renderAll();
+  }
 });
 
 function saveData(){
   if(!ready)return;
-  ref.set(JSON.parse(JSON.stringify(data)));
+  saving=true;
+  ref.set(JSON.parse(JSON.stringify(data)))
+    .then(()=>{saving=false;showStatus('Salvo ✓','#22c55e');})
+    .catch(()=>{saving=false;showStatus('Erro ao salvar','#ef4444');});
 }
 
 function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
